@@ -37,7 +37,7 @@ SdlWrapper::SdlWrapper(int width, int height) {
 
 SdlWrapper::~SdlWrapper() {
 	outputImage.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-	outputImage.write_tga_file("output.tga");
+	outputImage.write_tga_file("..\\output\\output.tga");
 }
 
 

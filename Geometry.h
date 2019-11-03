@@ -104,7 +104,6 @@ public:
 		return vecResult;
 	};
 
-
 	Matrix operator *(const Matrix &matr) const {
 		Matrix result;
 		for (int y = 0; y < 4; y++) {
@@ -117,6 +116,50 @@ public:
 		return result;
 	};
 
+	inline float e(int i, int j, int a, int b) {
+		return m[((i + a) % 4)][((j + b) % 4)];
+	}
+
+	float invf(int i, int j) {
+
+		int o = 2 + (j - i);
+
+		i += 4 + o;
+		j += 4 - o;
+
+		float inv =
+			+ e(i, j, +1,-1) * e(i, j, +0,+0) * e(i, j, -1,+1)
+			+ e(i, j, +1,+1) * e(i, j, +0,-1) * e(i, j, -1,+0)
+			+ e(i, j, -1,-1) * e(i, j, +1,+0) * e(i, j, +0,+1)
+			- e(i, j, -1,-1) * e(i, j, +0,+0) * e(i, j, +1,+1)
+			- e(i, j, -1,+1) * e(i, j, +0,-1) * e(i, j, +1,+0)
+			- e(i, j, +1,-1) * e(i, j, -1,+0) * e(i, j, +0,+1);
+
+		return (o % 2) ? inv : -inv;
+	}
+
+	Matrix invert_transpose() {
+		Matrix inverted;
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				inverted.m[i][j] = invf(i, j);
+
+		float D = 0;
+		for (int k = 0; k < 4; k++)
+			D += m[0][k] * inverted.m[k][0];
+
+		if (D == 0)
+			return Matrix::Identity();
+
+		D = 1.0f / D;
+
+		Matrix transposed;
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				transposed.m[j][i] = inverted.m[i][j] * D;
+
+		return transposed;
+	}
 };
 
 

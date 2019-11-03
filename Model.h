@@ -25,9 +25,24 @@ public:
 	};
 
 	inline TGAColor getDiffuseColor(Vector2f uv) {
-		return diffuse.get((int)(uv.u * diffuse.get_width()),
-						   (int)(uv.y * diffuse.get_height()));
+		return diffuseMap.get((int)(uv.u * diffuseMap.get_width()),
+						   (int)(uv.y * diffuseMap.get_height()));
 	};
+
+	inline Vector3f getNormal(Vector2f uv) {
+		TGAColor color = normalMap.get((int)(uv.u * normalMap.get_width()),
+			(int)(uv.v * normalMap.get_height()));
+		Vector3f result;
+		result.x = (float)color.r / 255.0f * 2.0f - 1.0f;
+		result.y = (float)color.g / 255.0f * 2.0f - 1.0f;
+		result.z = (float)color.b / 255.0f * 2.0f - 1.0f;
+		return result;
+	}
+
+	inline float getSpecular(Vector2f uv) {
+		return (float)specularMap.get((int)(uv.u * specularMap.get_width()),
+			(int)(uv.y * specularMap.get_height())).raw[0];
+	}
 
 private:
 	std::vector<Vector3f> verts;
@@ -41,7 +56,9 @@ private:
 	};
 	std::vector<Face> faces;
 
-	TGAImage diffuse;
+	TGAImage diffuseMap;
+	TGAImage normalMap;
+	TGAImage specularMap;
 };
 
 #endif //__MODEL_H__
