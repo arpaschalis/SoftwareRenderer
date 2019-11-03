@@ -13,4 +13,4 @@ My code is not optimized. I do not know for example if drawing single pixels thr
 
 Examples for the current state with virtual shaders:
 
-![black and white](softwarerenderer_blackwhite.jpg) ![red stripe](softwarerenderer_redstripe.jpg)
+![black and white](softwarerenderer_blackwhite.jpg) ![red stripe](softwarerenderer_redstripe.jpg) ![normal and specular](softwarerenderer_specular.jpg) 
