@@ -69,7 +69,7 @@ Vector3f barycentric(Vector3i t0, Vector3i t1, Vector3i t2, Vector2i p) {
 }
 
 
-void triangle(Vector3f screen_coords[3], SdlWrapper &sdl, IShader &shader) {
+void triangle(Vector3f screen_coords[3], SdlWrapper &sdl, IShader &shader, bool toDepthBuffer) {
 	// TODO: We previously accepted integer vectors for the vertex descriptions.
 	// Try it again if there are accurancy problems.
 	Vector3i vertex[3];
@@ -94,7 +94,7 @@ void triangle(Vector3f screen_coords[3], SdlWrapper &sdl, IShader &shader) {
 				bool toDiscard = shader.fragment(vecBarycentric, color);
 				int z = int(vecBarycentric.x * vertex[0].z + vecBarycentric.y * vertex[1].z + vecBarycentric.z * vertex[2].z);
 				if (toDiscard == false && z > zBuffer[y][x]) {
-					sdl.drawPoint(x, y, color);
+					sdl.drawPoint(x, y, color, toDepthBuffer);
 					zBuffer[y][x] = z;
 				}
 			}

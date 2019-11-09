@@ -138,7 +138,7 @@ public:
 		return (o % 2) ? inv : -inv;
 	}
 
-	Matrix invert_transpose() {
+	Matrix invert() {
 		Matrix inverted;
 		for (int i = 0; i < 4; i++)
 			for (int j = 0; j < 4; j++)
@@ -153,10 +153,18 @@ public:
 
 		D = 1.0f / D;
 
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				inverted.m[i][j] = inverted.m[i][j] * D;
+
+		return inverted;
+	}
+
+	Matrix transpose() {
 		Matrix transposed;
 		for (int i = 0; i < 4; i++)
 			for (int j = 0; j < 4; j++)
-				transposed.m[j][i] = inverted.m[i][j] * D;
+				transposed.m[j][i] = m[i][j];
 
 		return transposed;
 	}

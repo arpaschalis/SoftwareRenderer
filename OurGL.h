@@ -20,4 +20,4 @@ struct IShader {
 	virtual bool fragment(Vector3f barycentric, TGAColor &color) = 0;
 };
 
-void triangle(Vector3f vertex[3], SdlWrapper &sdl, IShader &shader);
+void triangle(Vector3f vertex[3], SdlWrapper &sdl, IShader &shader, bool toDepthBuffer);

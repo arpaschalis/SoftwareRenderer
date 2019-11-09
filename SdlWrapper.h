@@ -10,15 +10,17 @@ public:
 	~SdlWrapper();
 
 	void clearScreen();
-	void drawPoint(int x, int y, TGAColor &color);
+	void drawPoint(int x, int y, TGAColor &color, bool toDepthBuffer);
 	void present();
+
+	TGAImage shadow_buffer;
 
 private:
 	SDL_Renderer*	renderer;
 	SDL_Window*		win;
 	int				winHeight;	// used to flip image;
 
-	TGAImage outputImage;
+	TGAImage output_image;
 };
 
 #endif //__SDL_H__

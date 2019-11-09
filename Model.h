@@ -59,6 +59,7 @@ private:
 	TGAImage diffuseMap;
 	TGAImage normalMap;
 	TGAImage specularMap;
+	TGAImage glowMap;
 };
 
 #endif //__MODEL_H__

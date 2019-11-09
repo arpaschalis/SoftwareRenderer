@@ -31,13 +31,16 @@ SdlWrapper::SdlWrapper(int width, int height) {
 		return;
 	}
 
-	outputImage.init(width, height, TGAImage::RGB);
+	output_image.init(width, height, TGAImage::RGB);
+	shadow_buffer.init(width, height, TGAImage::RGB);
 }
 
 
 SdlWrapper::~SdlWrapper() {
-	outputImage.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-	outputImage.write_tga_file("..\\output\\output.tga");
+	output_image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
+	output_image.write_tga_file("..\\output\\output.tga");
+	shadow_buffer.flip_vertically();
+	shadow_buffer.write_tga_file("..\\output\\shadow_buffer.tga");
 }
 
 
@@ -47,11 +50,16 @@ void SdlWrapper::clearScreen() {
 }
 
 
-void SdlWrapper::drawPoint(int x, int y, TGAColor &color) {
+void SdlWrapper::drawPoint(int x, int y, TGAColor &color, bool toShadowBuffer) {
+	if (toShadowBuffer) {
+		shadow_buffer.set(x, y, color);
+		return;
+	}
+
 	SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 	SDL_RenderDrawPoint(renderer, x, winHeight - y);
 
-	outputImage.set(x, y, color);
+	output_image.set(x, y, color);
 }
 
 
