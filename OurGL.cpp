@@ -1,5 +1,7 @@
 #include "OurGL.h"
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 
 Matrix modelView;
@@ -56,12 +58,12 @@ void lookAt(Vector3f eye, Vector3f center, Vector3f up) {
 }
 
 
-Vector3f barycentric(Vector3i t0, Vector3i t1, Vector3i t2, Vector2i p) {
-	Vector3f vec1(float(t1.x - t0.x), float(t2.x - t0.x), float(t0.x - p.x));
-	Vector3f vec2(float(t1.y - t0.y), float(t2.y - t0.y), float(t0.y - p.y));
+Vector3f barycentric(Vector3f t0, Vector3f t1, Vector3f t2, Vector2f p) {
+	Vector3f vec1(t1.x - t0.x, t2.x - t0.x, t0.x - p.x);
+	Vector3f vec2(t1.y - t0.y, t2.y - t0.y, t0.y - p.y);
 	Vector3f u = vec1 ^ vec2;
 
-	// t0, t1, t2, p have integer value as coordinates. So `abs(u[2])` < 1 means `u[2]` is 0.
+	// t0, t1, t2, p have whole-pixel coordinates. So `abs(u.z)` < 1 means `u.z` is 0.
 	// That means triangle is degenerate, in this case return something with negative coordinates
 	if (std::abs(u.z) < 1) return Vector3f(-1, 1, 1);
 
@@ -69,15 +71,13 @@ Vector3f barycentric(Vector3i t0, Vector3i t1, Vector3i t2, Vector2i p) {
 }
 
 
-void triangle(Vector3f screen_coords[3], SdlWrapper &sdl, IShader &shader, bool toDepthBuffer) {
-	// TODO: We previously accepted integer vectors for the vertex descriptions.
-	// Try it again if there are accurancy problems.
-	Vector3i vertex[3];
-	vertex[0] = Vector3i((int)screen_coords[0].x, (int)screen_coords[0].y, (int)screen_coords[0].z);
-	vertex[1] = Vector3i((int)screen_coords[1].x, (int)screen_coords[1].y, (int)screen_coords[1].z);
-	vertex[2] = Vector3i((int)screen_coords[2].x, (int)screen_coords[2].y, (int)screen_coords[2].z);
+void triangle(Vector3f screen_coords[3], SdlWrapper &sdl, IShader &shader, bool toShadowBuffer) {
+	// Round the corners to whole pixels (cut off the decimals).
+	Vector3f vertex[3];
+	for (int i = 0; i < 3; i++)
+		vertex[i] = Vector3f(std::trunc(screen_coords[i].x), std::trunc(screen_coords[i].y), std::trunc(screen_coords[i].z));
 
-	// Find bouncing Box
+	// Find bounding box
 	int xMin = (int)std::min(vertex[0].x, std::min(vertex[1].x, vertex[2].x));
 	int yMin = (int)std::min(vertex[0].y, std::min(vertex[1].y, vertex[2].y));
 	int xMax = (int)std::max(vertex[0].x, std::max(vertex[1].x, vertex[2].x));
@@ -89,12 +89,12 @@ void triangle(Vector3f screen_coords[3], SdlWrapper &sdl, IShader &shader, bool 
 			if (x < 0 || x >= width || y < 0 || y >= height)
 				continue;
 
-			Vector3f vecBarycentric = barycentric(vertex[0], vertex[1], vertex[2], Vector2i(x, y));
+			Vector3f vecBarycentric = barycentric(vertex[0], vertex[1], vertex[2], Vector2f((float)x, (float)y));
 			if (vecBarycentric.x >= 0 && vecBarycentric.y >= 0 && vecBarycentric.z >= 0) {
 				bool toDiscard = shader.fragment(vecBarycentric, color);
 				int z = int(vecBarycentric.x * vertex[0].z + vecBarycentric.y * vertex[1].z + vecBarycentric.z * vertex[2].z);
 				if (toDiscard == false && z > zBuffer[y][x]) {
-					sdl.drawPoint(x, y, color, toDepthBuffer);
+					sdl.drawPoint(x, y, color, toShadowBuffer);
 					zBuffer[y][x] = z;
 				}
 			}

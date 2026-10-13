@@ -10,7 +10,7 @@ public:
 	~SdlWrapper();
 
 	void clearScreen();
-	void drawPoint(int x, int y, TGAColor &color, bool toDepthBuffer);
+	void drawPoint(int x, int y, TGAColor &color, bool toShadowBuffer);
 	void present();
 
 	TGAImage shadow_buffer;

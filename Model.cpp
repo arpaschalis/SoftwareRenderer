@@ -3,15 +3,14 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include "model.h"
+#include "Model.h"
 
 Model::Model(const char *filename) : verts(), uvCoords(), normals() {
 	std::ifstream in;
 	in.open(filename, std::ifstream::in);
 	if (in.fail()) return;
 	std::string line;
-	while (!in.eof()) {
-		std::getline(in, line);
+	while (std::getline(in, line)) {
 		std::istringstream iss(line.c_str());
 		char trash;
 		if (!line.compare(0, 2, "v ")) {
@@ -49,30 +48,27 @@ Model::Model(const char *filename) : verts(), uvCoords(), normals() {
 	std::cerr << "# v# " << verts.size() << " vt# " << uvCoords.size() << " vn# "
 		<< normals.size() << " f# " << faces.size() << std::endl;
 
-	diffuseMap.read_tga_file("obj\\african_head_diffuse.tga");
+	diffuseMap.read_tga_file("assets/head_diffuse.tga");
 	diffuseMap.flip_vertically();
-	normalMap.read_tga_file("obj\\african_head_nm.tga");
+	normalMap.read_tga_file("assets/head_nm.tga");
 	normalMap.flip_vertically();
-	specularMap.read_tga_file("obj\\african_head_spec.tga");
+	specularMap.read_tga_file("assets/head_spec.tga");
 	specularMap.flip_vertically();
 }
 
-Model::~Model() {
-}
-
-int Model::nverts() {
+int Model::numVerts() {
 	return (int)verts.size();
 }
 
-int Model::nUvCoords() {
+int Model::numUvCoords() {
 	return (int)uvCoords.size();
 }
 
 
-int Model::nNormals() {
+int Model::numNormals() {
 	return (int)normals.size();
 }
 
-int Model::nfaces() {
+int Model::numFaces() {
 	return (int)faces.size();
 }

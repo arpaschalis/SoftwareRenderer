@@ -328,3 +328,16 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+lib/SDL2.dll
+lib/SDL2.lib
+lib/SDL2main.lib
+lib/SDL2test.lib
+SDL2.dll
+SDL2.dll
+/SDL2
+Software Renderer.rc
+Software Renderer.sln
+Software Renderer.vcxproj
+Software Renderer.vcxproj.filters
+resource.h
+SDL2.dll

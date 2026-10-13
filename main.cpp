@@ -1,4 +1,3 @@
-#include "stdlib.h"
 #include "SdlWrapper.h"
 #include "SDL.h"
 #include "Geometry.h"
@@ -14,6 +13,13 @@ Vector3f eye(5.0f, 3.0f, 15.0f);
 Vector3f center(0.0f, 0.0f, 0.0f);
 Vector3f up(0.0f, 1.0f, 0.0f);
 
+const float cameraDistance = 3.0f;	// strength of the perspective effect
+const float depthRange = 255.0f;	// z values on screen go from 0 to this
+const float shadowBrightness = 0.3f;	// brightness of a pixel in shadow (1.0 = lit)
+const float specularWeight = 0.6f;	// strength of the shiny highlights
+// A pixel only counts as shadowed if something is closer to the light by more
+// than this. Prevents surfaces from shadowing themselves. Value from the tutorial.
+const float shadowBias = 43.34f;
 
 
 
@@ -55,7 +61,8 @@ struct Shader : public IShader {
 		Vector3f point_coords = vertex_coords[0] * barycentric.x + vertex_coords[1] * barycentric.y +
 				vertex_coords[2] * barycentric.z;
 		Vector3f shadow_point = shadow_transform * point_coords;
-		float shadow = 0.3f + 0.7f * (sdl.shadow_buffer.get(shadow_point.x, shadow_point.y).raw[2] < shadow_point.z + 43.34f);
+		bool lit = sdl.shadow_buffer.get(shadow_point.x, shadow_point.y).raw[2] < shadow_point.z + shadowBias;
+		float shadow = lit ? 1.0f : shadowBrightness;
 		Vector2f uv =  uv_coords[0] * barycentric.x + uv_coords[1] * barycentric.y +  uv_coords[2] * barycentric.z;
 		Vector3f normal = (projmodelview_IT * model->getNormal(uv)).normalize();
 		Vector3f light = (projmodelview * lightDirection).normalize();
@@ -65,51 +72,50 @@ struct Shader : public IShader {
 		color = model->getDiffuseColor(uv);
 		for (int i = 0; i < 3; i++)
 			color.raw[i] = (unsigned char)std::min<float>(0.0f + color.raw[i] * shadow *
-					(diffuse + 0.6f * specular), 255.0f);
-		if (shadow < 1.0f)
-			shadow = 1.0f;
+					(diffuse + specularWeight * specular), 255.0f);
 
 		return false;
 	}
 };
 
 
+void drawModel(IShader &shader, bool toShadowBuffer) {
+	Vector3f screen_coords[3];
+	for (int i = 0; i < model->numFaces(); i++) {
+		for (int j = 0; j < 3; j++) {
+			screen_coords[j] = shader.vertex(i, j);
+		}
+		triangle(screen_coords, sdl, shader, toShadowBuffer);
+	}
+}
+
+
 int main(int argc, char* args[]) {
 	// Begin.
 	sdl.clearScreen();
 	clearZBuffer();
-	model = new Model("obj\\african_head.obj");
+	model = new Model("assets/head.obj");
 
 	lightDirection.normalize();
 
-	setProjection(3.0f);
-	setViewport(width / 8.0f, height / 8.0f, width * 3.0f / 4.0f, height * 3.0f / 4.0f, 255.0f);
+	setProjection(cameraDistance);
+	setViewport(width / 8.0f, height / 8.0f, width * 3.0f / 4.0f, height * 3.0f / 4.0f, depthRange);
+
+	// Pass 1: draw the model as seen from the light into the shadow buffer.
 	lookAt(lightDirection, center, up);
 	DepthShader depthShader;
-	Vector3f screen_coords[3];
-	for (int i = 0; i < model->nfaces(); i++) {
-		for (int j = 0; j < 3; j++) {
-			screen_coords[j] = depthShader.vertex(i, j);
-		}
-		triangle(screen_coords, sdl, depthShader, true);
-	}
+	drawModel(depthShader, true);
 
-	Matrix M = viewport * projection * modelView;
+	Matrix M = viewport * projection * modelView;	// model -> screen, as seen from the light
 
+	// Pass 2: draw the model as seen from the camera, using the shadow buffer.
 	clearZBuffer();
-	setProjection(3.0f);
-	setViewport(width / 8.0f, height / 8.0f, width * 3.0f / 4.0f, height * 3.0f / 4.0f, 255.0f);
 	lookAt(eye, center, up);
 	Shader shader;
 	shader.projmodelview = projection * modelView;
 	shader.projmodelview_IT = shader.projmodelview.invert().transpose();
 	shader.shadow_transform = M * (viewport * projection * modelView).invert();
-	for (int i = 0; i < model->nfaces(); i++) {
-		for (int j = 0; j < 3; j++) {
-			screen_coords[j] = shader.vertex(i, j);
-		}
-		triangle(screen_coords, sdl, shader, false);
-	}
+	drawModel(shader, false);
 
 	// End.
 	sdl.present();

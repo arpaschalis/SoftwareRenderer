@@ -1,59 +1,39 @@
-#ifndef __GEOMETRY_H__
-#define __GEOMETRY_H__
+#pragma once
 
 #include <cmath>
-#include <iostream>
 
-template<typename T> struct Vector2 {
+struct Vector2f {
 public:
 	union {
-		struct { T u, v; };
-		struct { T x, y; };
-		T raw[2];
+		struct { float u, v; };
+		struct { float x, y; };
+		float raw[2];
 	};
 
-	Vector2() : u(0), v(0) {}
-	Vector2(T u_, T v_) : u(u_), v(v_) {}
-	inline Vector2<T> operator +(const Vector2<T> &V) const { return Vector2<T>(u + V.u, v + V.v); }
-	inline Vector2<T> operator -(const Vector2<T> &V) const { return Vector2<T>(u - V.u, v - V.v); }
-	inline Vector2<T> operator *(float f)			  const { return Vector2<T>(u * f, v * f); }
-	template <class> friend std::ostream& operator <<(std::ostream& s, Vector2<T>& v);
+	Vector2f() : u(0), v(0) {}
+	Vector2f(float u_, float v_) : u(u_), v(v_) {}
+	inline Vector2f operator +(const Vector2f &V) const { return Vector2f(u + V.u, v + V.v); }
+	inline Vector2f operator -(const Vector2f &V) const { return Vector2f(u - V.u, v - V.v); }
+	inline Vector2f operator *(float f)			  const { return Vector2f(u * f, v * f); }
 };
 
-template<typename T> struct Vector3 {
+struct Vector3f {
 public:
 	union {
-		struct { T x, y, z; };
-		struct { T ivert, iuv, inorm; };
-		T raw[3];
+		struct { float x, y, z; };
+		float raw[3];
 	};
 
-	Vector3() : x(0), y(0), z(0) {}
-	Vector3(T x_, T y_, T z_) : x(x_), y(y_), z(z_) {}
-	inline Vector3<T> operator ^(const Vector3<T> &v) const { return Vector3<T>(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
-	inline Vector3<T> operator +(const Vector3<T> &v) const { return Vector3<T>(x + v.x, y + v.y, z + v.z); }
-	inline Vector3<T> operator -(const Vector3<T> &v) const { return Vector3<T>(x - v.x, y - v.y, z - v.z); }
-	inline Vector3<T> operator *(float f)			  const { return Vector3<T>(x * f, y * f, z * f); }
-	inline T		  operator *(const Vector3<T> &v) const { return x * v.x + y * v.y + z * v.z; }
+	Vector3f() : x(0), y(0), z(0) {}
+	Vector3f(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+	inline Vector3f operator ^(const Vector3f &v) const { return Vector3f(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }	// cross product
+	inline Vector3f operator +(const Vector3f &v) const { return Vector3f(x + v.x, y + v.y, z + v.z); }
+	inline Vector3f operator -(const Vector3f &v) const { return Vector3f(x - v.x, y - v.y, z - v.z); }
+	inline Vector3f operator *(float f)			  const { return Vector3f(x * f, y * f, z * f); }
+	inline float	operator *(const Vector3f &v) const { return x * v.x + y * v.y + z * v.z; }	// dot product
 	float norm() const { return std::sqrt(x * x + y * y + z * z); }
-	Vector3<T>& normalize(T l = 1) { *this = (*this)*(1 / norm()); return *this; }
-	template <class> friend std::ostream& operator <<(std::ostream& s, Vector3<T>& v);
+	Vector3f& normalize() { *this = (*this)*(1 / norm()); return *this; }
 };
-
-typedef Vector2<float>	Vector2f;
-typedef Vector2<int>	Vector2i;
-typedef Vector3<float>	Vector3f;
-typedef Vector3<int>	Vector3i;
-
-template <class T> std::ostream& operator <<(std::ostream& s, Vector2<T>& v) {
-	s << "(" << v.x << ", " << v.y << ")\n";
-	return s;
-}
-
-template <class T> std::ostream& operator <<(std::ostream& s, Vector3<T>& v) {
-	s << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
-	return s;
-}
 
 
 class Matrix {
@@ -63,13 +43,7 @@ public:
 		0.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 0.0f, };
 
-	Matrix() {
-		for (int x = 0; x < 4; x++) {
-			for (int y = 0; y < 4; y++) {
-				m[y][x] = 0.0f;
-			}
-		}
-	}
+	Matrix() {}
 
 	Matrix(float m00, float m01, float m02, float m03,
 			float m10, float m11, float m12, float m13,
@@ -89,7 +63,9 @@ public:
 					0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
-	Vector3<float> operator *(const Vector3<float> &v) const {
+	// Transforms a point: (x, y, z) -> (x, y, z, 1), multiply, then divide by w.
+	// The division by w is the perspective effect.
+	Vector3f operator *(const Vector3f &v) const {
 		float result[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		for (int y = 0; y < 4; y++) {
 			for (int x = 0; x < 3; x++) {
@@ -97,7 +73,7 @@ public:
 			}
 			result[y] += m[y][3];
 		}
-		Vector3<float> vecResult;
+		Vector3f vecResult;
 		vecResult.x = result[0] / result[3];
 		vecResult.y = result[1] / result[3];
 		vecResult.z = result[2] / result[3];
@@ -116,10 +92,13 @@ public:
 		return result;
 	};
 
+	// Helpers for invert(): element of the matrix with wrap-around indices.
 	inline float e(int i, int j, int a, int b) {
 		return m[((i + a) % 4)][((j + b) % 4)];
 	}
 
+	// One cofactor of the matrix (the 3x3 determinant that is left when
+	// row i and column j are removed, with the right sign).
 	float invf(int i, int j) {
 
 		int o = 2 + (j - i);
@@ -138,6 +117,7 @@ public:
 		return (o % 2) ? inv : -inv;
 	}
 
+	// Inverse = adjugate (matrix of cofactors) divided by the determinant.
 	Matrix invert() {
 		Matrix inverted;
 		for (int i = 0; i < 4; i++)
@@ -169,6 +149,3 @@ public:
 		return transposed;
 	}
 };
-
-
-#endif // __GEOMETRY_H__
